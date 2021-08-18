@@ -12,6 +12,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.slf4j.Logger;
@@ -48,28 +49,33 @@ class MyWebSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .and()
-                .formLogin().//.and().httpBasic()  //.disable()
-                and()
-                .logout()
-                .logoutSuccessUrl("/")
-                .clearAuthentication(true)
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID");
+    	// 로그인 설정
+        http.authorizeRequests()
+        	   .antMatchers("/login","/admin","/invalid", "/error**").permitAll()
+            .antMatchers("/**").authenticated();
 
         http
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .invalidSessionUrl("/invalid");
+            // 로그인 페이지 및 성공 url, handler 그리고 로그인 시 사용되는 id, password 파라미터 정의
+            .formLogin()
+            .defaultSuccessUrl("/")
+            .failureUrl("/error")
+            .usernameParameter("id_user")
+            .passwordParameter("password");
+        http
+            // 로그아웃 관련 설정
+            .logout().logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+            .logoutSuccessUrl("/login")
+            .invalidateHttpSession(true)
+            .clearAuthentication(true)
+            .deleteCookies("JSESSIONID")
+         .and()
+           	.csrf()
+           	.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
 
-        log.debug("http={}", http);
-
-
-        //.authorizeRequests()
-        //				.requestMatchers(EndpointRequest.toAnyEndpoint()).permitAll()
-        //				.anyRequest().authenticated()//.fullyAuthenticated()//
-        //				.and()
+        http
+	      .sessionManagement()
+	      .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+	      .invalidSessionUrl("/invalid");
 
     }
 }
