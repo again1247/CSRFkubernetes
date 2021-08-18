@@ -1,0 +1,22 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+---
+spring:
+  profiles: ci
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: >
+          shutdown
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
